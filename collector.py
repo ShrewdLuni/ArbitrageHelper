@@ -4,12 +4,10 @@ import json
 import threading
 
 class BaseCollector(ABC):
-    def __init__(self, ws_url: str):
+    def __init__(self, ws_url: str, data_pointer):
         self.ws_url = ws_url
         self.ws = None
-        self.result = {}
-        self.modulo = 0
-        self.limit = 1000
+        self.data_pointer = data_pointer
 
     @abstractmethod
     def process_message(self, message: str):

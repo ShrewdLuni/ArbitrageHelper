@@ -5,8 +5,8 @@ import threading
 from collector import BaseCollector
 
 class KrakenCollector(BaseCollector):
-    def __init__(self):
-        super().__init__("wss://ws.kraken.com/v2")
+    def __init__(self, data_pointer):
+        super().__init__("wss://ws.kraken.com/v2", data_pointer)
         self.trading_pairs = self.get_all_pairs()
 
     def get_all_pairs(self):
@@ -19,7 +19,7 @@ class KrakenCollector(BaseCollector):
             for key in data["result"]:
                 ws_pair = data["result"][key]["wsname"]
 
-                if 'USD' in ws_pair.split("/"):
+                if 'USDT' in ws_pair.split("/"):
                     pairs.append(data["result"][key]["wsname"])
             return pairs
 
@@ -28,7 +28,6 @@ class KrakenCollector(BaseCollector):
             return []
 
     def process_message(self, message: str):
-        self.limit = 50 
         data = json.loads(message)
 
 
@@ -36,14 +35,10 @@ class KrakenCollector(BaseCollector):
             return
         channel = data["channel"]
         if channel == "ticker":
-            result = {}
             ticker_data = data["data"][0]
-            self.result[ticker_data["symbol"]] = ticker_data["last"]
-            self.modulo += 1
-            if self.modulo >= self.limit:
-                self.modulo = 0
-                print("Kraken:", self.result)
-            #print(f"{ticker_data["symbol"]}: {ticker_data["last"]}$ kraken")
+            symbol = "".join(ticker_data["symbol"].split("/"))
+            price = ticker_data["last"]
+            self.data_pointer[symbol]["Kraken"] = price 
 
     def subscribe(self, ws):
         subscribe_message = json.dumps({
